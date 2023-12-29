@@ -31,10 +31,15 @@ async function signUpData(){
     if(validateForm(name.value,email.value,password.value,confirmPassword.value)){
         const data={name:name.value,email:email.value,password:password.value}
         await axios.post("http://localhost:3000/user-signup",data).then(res=>{
-            name.value="";
-            email.value="";
-            password.value="";
-            confirmPassword.value="";
+            if(res.data.message){
+                document.getElementById("errorMessages").innerText=res.data.message;
+            }
+            else {
+                name.value="";
+                email.value="";
+                password.value="";
+                confirmPassword.value="";
+            }
         })
     }
 

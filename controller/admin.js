@@ -13,5 +13,7 @@ module.exports.createUser=async (req, res, next)=>{
     const password=req.body.password;
     await User.create({name:name,email:email,password:password}).then(data=>{
         res.status(201).json(data.dataValues);
+    }).catch(err=>{
+        res.status(201).json({message:err.errors[0].message});
     })
 }
