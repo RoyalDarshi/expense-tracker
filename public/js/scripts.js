@@ -34,22 +34,19 @@ async function signUpData(){
 }
 
 async function login(){
+    const errMessage=document.getElementById("loginErrorMessages");
     const email=document.getElementById("loginEmail");
     const password=document.getElementById("loginPassword");
     const data={email:email.value,password:password.value};
     await axios.post("http://localhost:3000/user-login",data).then(res=>{
-        const errMessage=document.getElementById("loginErrorMessages");
-        if(res.data.err){
-            errMessage.innerText=res.data.err;
-        }
-        else if(res.data){
-            errMessage.innerText="";
-            alert("Login Successfully");
-        }
-        else {
-            errMessage.innerText="Wrong Password"
-        }
+        errMessage.innerText="";
+        alert(res.data);
     }).catch(err=>{
-        console.log(err)
+        if(err.request.status===401){
+            errMessage.innerText=err.response.data;
+        }
+        else if(err.request.status===404){
+            errMessage.innerText=err.response.data;
+        }
     })
 }

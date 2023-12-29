@@ -24,9 +24,12 @@ module.exports.loginUser=async (req,res,next)=>{
     console.log(req.body)
     await User.findAll({where:{email:email}}).then(data=>{
         if(!data[0]){
-            return res.status(201).json({err:"User not exist"});
+            return res.status(404).json("User not found");
         }
-        return res.status(201).json(data[0].dataValues.password===password);
+        if(data[0].dataValues.password===password){
+            return res.status(201).json("User login successfully");
+        }
+        return res.status(401).json("User not authorized");
     }).catch(err=>{
         console.log(err)
     })
