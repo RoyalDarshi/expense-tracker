@@ -1,24 +1,13 @@
 function validateForm(name,email,password,confirmPassword) {
-    // Clear previous error messages
     document.getElementById('errorMessages').innerHTML = '';
-
-    // Get form values
-
-
-    // Simple validation
     if (name.trim() === '' || email.trim() === '' || password.trim() === '' || confirmPassword.trim() === '') {
         document.getElementById('errorMessages').innerHTML = 'All fields are required.';
         return false;
     }
-
     if (password !== confirmPassword) {
         document.getElementById('errorMessages').innerHTML = 'Passwords do not match.';
         return false;
     }
-
-    // You can add more complex validation if needed
-
-    // If the form is valid, you can submit it
     return true;
 }
 
@@ -42,9 +31,25 @@ async function signUpData(){
             }
         })
     }
+}
 
-    /*const name=nameEle.value;
-    const email=emailEle.value;
-    const password=passwordEle.value;
-    const confirmPassword=confirmPasswordEle.value;*/
+async function login(){
+    const email=document.getElementById("loginEmail");
+    const password=document.getElementById("loginPassword");
+    const data={email:email.value,password:password.value};
+    await axios.post("http://localhost:3000/user-login",data).then(res=>{
+        const errMessage=document.getElementById("loginErrorMessages");
+        if(res.data.err){
+            errMessage.innerText=res.data.err;
+        }
+        else if(res.data){
+            errMessage.innerText="";
+            alert("Login Successfully");
+        }
+        else {
+            errMessage.innerText="Wrong Password"
+        }
+    }).catch(err=>{
+        console.log(err)
+    })
 }

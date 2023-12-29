@@ -17,3 +17,17 @@ module.exports.createUser=async (req, res, next)=>{
         res.status(201).json({message:err.errors[0].message});
     })
 }
+
+module.exports.loginUser=async (req,res,next)=>{
+    const email=req.body.email;
+    const password=req.body.password;
+    console.log(req.body)
+    await User.findAll({where:{email:email}}).then(data=>{
+        if(!data[0]){
+            return res.status(201).json({err:"User not exist"});
+        }
+        return res.status(201).json(data[0].dataValues.password===password);
+    }).catch(err=>{
+        console.log(err)
+    })
+}
