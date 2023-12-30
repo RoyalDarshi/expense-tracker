@@ -10,4 +10,10 @@ router.post("/user-signup",adminController.createUser);
 
 router.post("/user-login",adminController.loginUser);
 
+router.post("/create-expense",adminController.createExpense);
+
+router.get("/get-expenses/:userId",adminController.getAllExpenses);
+
+router.delete("/delete-expense/:id")
+
 module.exports=router;

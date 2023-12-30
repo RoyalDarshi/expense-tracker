@@ -39,9 +39,10 @@ async function login(){
     const email=document.getElementById("loginEmail");
     const password=document.getElementById("loginPassword");
     const data={email:email.value,password:password.value};
-    await axios.post("http://localhost:3000/user-login",data).then(res=>{
+    await axios.post("http://localhost:3000/user-login",data).then((res)=>{
         errMessage.innerText="";
-        alert(res.data);
+        window.location.href="../html/expense.html"
+        localStorage.setItem("userId",res.data.id);
         email.value="";
         password.value=""
     }).catch(err=>{

@@ -4,6 +4,7 @@ const path=require("path");
 
 const rootDir=require("../util/path");
 const User=require("../model/user");
+const Expense=require("../model/expense")
 
 module.exports.sendFile=(req,res,next)=>{
     res.sendFile(path.join(rootDir,"view","index.html"))
@@ -33,12 +34,38 @@ module.exports.loginUser=async (req,res,next)=>{
         }
         bcrypt.compare(password,data[0].dataValues.password,(err,value)=>{
             if(value){
-                return res.status(201).json("User login successfully");
+                return res.status(201).json(data[0].dataValues);
             }
-            return res.status(401).json("User not authorized");
+            else {
+                return res.status(401).json("User not authorized");
+            }
         })
 
     }).catch(err=>{
         console.log(err)
+    })
+}
+
+module.exports.createExpense=(req,res,next)=>{
+    const money=req.body.money;
+    const category=req.body.category;
+    const desc=req.body.description;
+    const userId=req.body.userId;
+    Expense.create({expense:money,category:category,description:desc,userId:userId}).then(data=>{
+        res.status(201).json(data.dataValues);
+    })
+}
+
+module.exports.getAllExpenses=(req,res,next)=>{
+    const userId=req.params.userId;
+    Expense.findAll({where:{userId:userId}}).then(data=>{
+        res.status(201).json(data)
+    })
+}
+
+module.exports.deleteExpense=(req,res,next)=>{
+    const id=req.params.id;
+    Expense.destroy({where:{id:id}}).then(data=>{
+        res.status(201).json(data);
     })
 }
