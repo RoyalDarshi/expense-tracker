@@ -28,6 +28,7 @@ async function signUpData(){
                 email.value="";
                 password.value="";
                 confirmPassword.value="";
+                alert("User created successfully")
             }
         })
     }
@@ -41,6 +42,8 @@ async function login(){
     await axios.post("http://localhost:3000/user-login",data).then(res=>{
         errMessage.innerText="";
         alert(res.data);
+        email.value="";
+        password.value=""
     }).catch(err=>{
         if(err.request.status===401){
             errMessage.innerText=err.response.data;
