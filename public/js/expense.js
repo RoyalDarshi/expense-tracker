@@ -8,6 +8,7 @@ async function createExpense(){
         money.value=""
         desc.value=""
         category.value=""
+        createRow([res.data]);
     })
 
 }
@@ -37,6 +38,12 @@ function createRow(data){
 
 async function deleteData(id){
     await axios.delete(`http://localhost:3000/delete-expense/${id}`).then(res=>{
-        console.log(res)
+        deleteRow(id);
     })
+}
+
+async function deleteRow(id){
+    const tRow=document.getElementById(id);
+    const tBody=document.getElementById("expenseTableBody");
+    tBody.removeChild(tRow);
 }
