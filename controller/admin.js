@@ -1,10 +1,19 @@
 const bcrypt=require("bcrypt");
+const jwt=require("jsonwebtoken");
 
 const path=require("path");
 
 const rootDir=require("../util/path");
 const User=require("../model/user");
-const Expense=require("../model/expense")
+const Expense=require("../model/expense");
+
+function createToken(id){
+    return jwt.sign(id,"72gsd33tags3fdh32hdh3hch44gd32hgh32g3hg")
+}
+
+function decodeToken(token){
+    return jwt.decode(token);
+}
 
 module.exports.sendFile=(req,res,next)=>{
     res.sendFile(path.join(rootDir,"view","index.html"))
@@ -27,14 +36,13 @@ module.exports.createUser=(req, res, next)=>{
 module.exports.loginUser=async (req,res,next)=>{
     const email=req.body.email;
     const password=req.body.password;
-    console.log(req.body)
     await User.findAll({where:{email:email}}).then(data=>{
         if(!data[0]){
             return res.status(404).json("User not found");
         }
         bcrypt.compare(password,data[0].dataValues.password,(err,value)=>{
             if(value){
-                return res.status(201).json(data[0].dataValues);
+                return res.status(201).json({id:createToken(data[0].dataValues.id)});
             }
             else {
                 return res.status(401).json("User not authorized");
@@ -51,14 +59,14 @@ module.exports.createExpense=(req,res,next)=>{
     const category=req.body.category;
     const desc=req.body.description;
     const userId=req.body.userId;
-    Expense.create({expense:money,category:category,description:desc,userId:userId}).then(data=>{
+    Expense.create({expense:money,category:category,description:desc,userId:decodeToken(userId)}).then(data=>{
         res.status(201).json(data.dataValues);
     })
 }
 
 module.exports.getAllExpenses=(req,res,next)=>{
     const userId=req.params.userId;
-    Expense.findAll({where:{userId:userId}}).then(data=>{
+    Expense.findAll({where:{userId:decodeToken(userId)}}).then(data=>{
         res.status(201).json(data)
     })
 }
