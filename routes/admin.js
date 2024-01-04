@@ -10,6 +10,8 @@ router.post("/user-signup",adminController.createUser);
 
 router.post("/user-login",adminController.loginUser);
 
+router.get("/find-user",adminController.isPremiumUser);
+
 router.post("/create-expense",adminController.createExpense);
 
 router.get("/get-expenses/:userId",adminController.getAllExpenses);

@@ -18,8 +18,30 @@ async function getAllData(){
     await axios.get(`http://localhost:3000/get-expenses/${userId}`).then(res=>{
         createRow(res.data)
     })
+    await axios.get("http://localhost:3000/find-user",{headers:{
+        "authorization":userId
+        }}).then(res=>{
+            if(res.data.isPremiumUser){
+                showSubscribedBtn()
+            }
+            else {
+                showSubscribeBtn()
+            }
+    })
+}
+function showSubscribedBtn(){
+    const subscribedBtn=document.getElementById("subscribed");
+    subscribedBtn.classList.remove("visually-hidden")
 }
 
+function showSubscribeBtn(){
+    const subscribeBtn=document.getElementById("subscribe");
+    subscribeBtn.classList.remove("visually-hidden");
+}
+function hideSubscribeBtn(){
+    const subscribeBtn=document.getElementById("subscribe");
+    subscribeBtn.classList.add("visually-hidden")
+}
 function createRow(data){
     const tBody=document.getElementById("expenseTableBody");
     for (const trow of data) {
@@ -46,4 +68,33 @@ async function deleteRow(id){
     const tRow=document.getElementById(id);
     const tBody=document.getElementById("expenseTableBody");
     tBody.removeChild(tRow);
+}
+
+async function subscribe(){
+    const userId=localStorage.getItem("userId");
+    const res=await axios.get("http://localhost:3000/purchase/purchase-premium",{headers:{"authorization":userId}})
+    let isPaymentFailed=false;
+    const options={
+        "key":res.data.key_id,
+        "order_id":res.data.id,
+        "handler":async (res)=>{
+            isPaymentFailed=true;
+            await axios.post("http://localhost:3000/purchase/update-payment-status",{
+                orderId:options.order_id,
+                paymentId: res.razorpay_payment_id
+            },{headers: {"authorization":userId}})
+            hideSubscribeBtn()
+            showSubscribedBtn()
+            alert("You are a premium user now")
+
+        }
+    }
+    const razorpay=new Razorpay(options);
+    razorpay.open()
+    razorpay.on("payment.failed",async()=>{
+        await axios.post("http://localhost:3000/purchase/payment-failed",{
+            orderId:options.order_id
+        },{headers: {"authorization":userId}})
+        alert("Payment Failed")
+    })
 }
