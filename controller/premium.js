@@ -1,23 +1,19 @@
 const Expense=require("../model/expense");
 const User=require("../model/user");
+const {Sequelize} = require("sequelize");
 
 module.exports.leaderboard=async (req,res)=>{
-    const mainData=[];
-    await User.findAll().then(async (user)=>{
-        await Expense.findAll({order:["userId"]}).then(async (expense)=>{
-            let userdata=user.map(data=>data.dataValues)
-            let expenseData=expense.map(data=>data.dataValues)
-            for (const user of userdata) {
-                let totalExpense=0;
-                for (const expense of expenseData) {
-                    if(user.id===expense.userId){
-                        totalExpense+=expense.expense;
-                    }
+    const user=await User.findAll({
+            attributes:["name",[Sequelize.fn('sum',Sequelize.col('expenses.expense')),"total_expense"]],
+            include:[
+                {
+                    model:Expense,
+                    attributes:[]
                 }
-                mainData.push({name: user.name, expense: totalExpense})
-            }
-        })
-
-        res.status(201).json(mainData.sort((a,b)=>b.expense-a.expense));
-    })
+            ],
+        group:["id"],
+        order:[["total_expense","DESC"]]
+        }
+    )
+    res.status(201).json(user);
 }

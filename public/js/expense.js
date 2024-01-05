@@ -143,7 +143,7 @@ async function showLeaderBoard(){
             tr.innerHTML=`<tr>
                         <td>${i+1}</td>
                         <td>${res.data[i].name}</td>
-                        <td>${res.data[i].expense}</td>
+                        <td>${res.data[i].total_expense||0}</td>
                     </tr>`;
             tbody.appendChild(tr)
         }
