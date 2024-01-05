@@ -4,7 +4,7 @@ const {Sequelize} = require("sequelize");
 
 module.exports.leaderboard=async (req,res)=>{
     const user=await User.findAll({
-            attributes:["name",[Sequelize.fn('sum',Sequelize.col('expenses.expense')),"total_expense"]],
+            attributes:["name","totalExpense"],
             include:[
                 {
                     model:Expense,
@@ -12,8 +12,10 @@ module.exports.leaderboard=async (req,res)=>{
                 }
             ],
         group:["id"],
-        order:[["total_expense","DESC"]]
+        order:[["totalExpense","DESC"]]
         }
-    )
+    ).catch(err=>{
+        console.log(err)
+    })
     res.status(201).json(user);
 }

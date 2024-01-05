@@ -25,14 +25,20 @@ module.exports.updatePaymentStatus=async (req,res)=>{
     const orderId=req.body.orderId;
     const paymentId=req.body.paymentId;
     const userId=jwt.decode(req.headers.authorization);
-    await Order.update({status:"SUCCESS",paymentId: paymentId},{where:{orderId:orderId}});
-    await User.update({isPremiumUser:true},{where:{id:userId}});
+    await Order.update({status:"SUCCESS",paymentId: paymentId},{where:{orderId:orderId}}).catch(err=>{
+        console.log(err)
+    })
+    await User.update({isPremiumUser:true},{where:{id:userId}}).catch(err=>{
+        console.log(err)
+    })
     res.status(201).json({msg:"Payment Success"})
 };
 
 module.exports.paymentFailed=async (req,res)=>{
     const orderId=req.body.orderId;
     const status=req.body.status;
-    await Order.update({status:status},{where:{orderId:orderId}});
+    await Order.update({status:status},{where:{orderId:orderId}}).catch(err=>{
+        console.log(err)
+    })
     res.status(201).json({msg:"Payment Failed"})
 }

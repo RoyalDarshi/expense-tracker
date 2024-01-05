@@ -58,6 +58,8 @@ module.exports.isPremiumUser=async (req,res)=>{
     const userId=decodeToken(req.headers.authorization);
     await User.findAll({where:{id:userId}}).then(data=>{
         res.status(201).json({isPremiumUser:data[0].dataValues.isPremiumUser})
+    }).catch(err=>{
+        console.log(err)
     })
 }
 
@@ -65,16 +67,30 @@ module.exports.createExpense=(req,res)=>{
     const money=req.body.money;
     const category=req.body.category;
     const desc=req.body.description;
-    const userId=req.body.userId;
-    Expense.create({expense:money,category:category,description:desc,userId:decodeToken(userId)}).then(data=>{
-        res.status(201).json(data.dataValues);
+    const userId=decodeToken(req.body.userId);
+    User.findOne({where:{id:userId}}).then(data=>{
+        const prevExpense=data.totalExpense||0;
+        User.update({totalExpense:prevExpense+ +money},{where:{id:userId}}).catch(err=>{
+            console.log(err)
+        })
+    }).catch(err=>{
+        console.log(err)
     })
+
+    Expense.create({expense:money,category:category,description:desc,userId:userId}).then(data=>{
+        res.status(201).json(data.dataValues);
+    }).catch(err=>{
+        console.log(err)
+    })
+
 }
 
 module.exports.getAllExpenses=(req,res)=>{
     const userId=req.params.userId;
     Expense.findAll({where:{userId:decodeToken(userId)}}).then(data=>{
         res.status(201).json(data)
+    }).catch(err=>{
+        console.log(err)
     })
 }
 
@@ -82,5 +98,7 @@ module.exports.deleteExpense=(req,res)=>{
     const id=req.params.id;
     Expense.destroy({where:{id:id}}).then(data=>{
         res.status(201).json(data);
+    }).catch(err=>{
+        console.log(err)
     })
 }
