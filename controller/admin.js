@@ -6,6 +6,7 @@ const path=require("path");
 const rootDir=require("../util/path");
 const User=require("../model/user");
 const Expense=require("../model/expense");
+const sequelize=require("../util/database");
 
 function createToken(id){
     return jwt.sign(id,"72gsd33tags3fdh32hdh3hch44gd32hgh32g3hg")
@@ -19,7 +20,7 @@ module.exports.sendFile=(req,res)=>{
     res.sendFile(path.join(rootDir,"view","index.html"))
 }
 
-module.exports.createUser=(req, res)=>{
+module.exports.createUser=async (req, res)=>{
     const name=req.body.name;
     const email=req.body.email;
     const password=req.body.password;
@@ -36,16 +37,16 @@ module.exports.createUser=(req, res)=>{
 module.exports.loginUser=async (req,res)=>{
     const email=req.body.email;
     const password=req.body.password;
-    await User.findAll({where:{email:email}}).then(data=>{
-        if(!data[0]){
+    await User.findOne({where:{email:email}}).then(data=>{
+        if(!data){
             return res.status(404).json("User not found");
         }
-        bcrypt.compare(password,data[0].dataValues.password,(err,value)=>{
+        bcrypt.compare(password,data.dataValues.password,(err,value)=>{
             if(value){
-                return res.status(201).json({id:createToken(data[0].dataValues.id)});
+                return res.status(201).json({id:createToken(data.dataValues.id)});
             }
             else {
-                return res.status(401).json("User not authorized");
+                return res.status(401).json("Wrong Password");
             }
         })
 
@@ -56,33 +57,32 @@ module.exports.loginUser=async (req,res)=>{
 
 module.exports.isPremiumUser=async (req,res)=>{
     const userId=decodeToken(req.headers.authorization);
-    await User.findAll({where:{id:userId}}).then(data=>{
-        res.status(201).json({isPremiumUser:data[0].dataValues.isPremiumUser})
+    await User.findOne({where:{id:userId}}).then(data=>{
+        res.status(201).json({isPremiumUser:data.dataValues.isPremiumUser})
     }).catch(err=>{
         console.log(err)
     })
 }
 
-module.exports.createExpense=(req,res)=>{
+module.exports.createExpense=async (req,res)=>{
     const money=req.body.money;
     const category=req.body.category;
     const desc=req.body.description;
     const userId=decodeToken(req.body.userId);
+    const trans=await sequelize.transaction();
     User.findOne({where:{id:userId}}).then(data=>{
         const prevExpense=data.totalExpense||0;
-        User.update({totalExpense:prevExpense+ +money},{where:{id:userId}}).catch(err=>{
-            console.log(err)
+        User.update({totalExpense:prevExpense+ +money},{where:{id:userId}},{transaction:trans}).then(async ()=>{
+            Expense.create({expense:money,category:category,description:desc,userId:userId},
+                {transaction:trans}).then(async (data)=>{
+                await trans.commit()
+                res.status(201).json(data.dataValues);
+            })
         })
-    }).catch(err=>{
+    }).catch(async (err)=>{
+        await trans.rollback();
         console.log(err)
     })
-
-    Expense.create({expense:money,category:category,description:desc,userId:userId}).then(data=>{
-        res.status(201).json(data.dataValues);
-    }).catch(err=>{
-        console.log(err)
-    })
-
 }
 
 module.exports.getAllExpenses=(req,res)=>{
@@ -94,11 +94,21 @@ module.exports.getAllExpenses=(req,res)=>{
     })
 }
 
-module.exports.deleteExpense=(req,res)=>{
+module.exports.deleteExpense=async (req,res)=>{
     const id=req.params.id;
-    Expense.destroy({where:{id:id}}).then(data=>{
-        res.status(201).json(data);
-    }).catch(err=>{
+    const userId=decodeToken(req.body.userId);
+    const trans=await sequelize.transaction();
+    const money=req.body.money;
+    User.findOne({where:{id:userId}}).then((data)=>{
+        User.update({totalExpense:data.dataValues.totalExpense-money}
+            ,{where:{id:userId}},{transaction:trans}).then(async ()=>{
+            Expense.destroy({where:{id:id}},{transaction:trans}).then(async (data)=>{
+                await trans.commit()
+                res.status(201).json(data);
+            })
+        })
+    }).catch(async (err)=>{
+        await trans.rollback()
         console.log(err)
     })
 }

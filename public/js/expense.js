@@ -65,16 +65,16 @@ function createRow(data){
 }
 
 async function deleteData(id){
-    await axios.delete(`http://localhost:3000/delete-expense/${id}`).then(res=>{
-        deleteRow(id);
+    const tRow=document.getElementById(id);
+    const money=tRow.children[0].innerText;
+    const userId=localStorage.getItem("userId");
+    const data={money:money,userId:userId}
+    await axios.post(`http://localhost:3000/delete-expense/${id}`,data).then(res=>{
+        const tBody=document.getElementById("expenseTableBody");
+        tBody.removeChild(tRow);
     })
 }
 
-async function deleteRow(id){
-    const tRow=document.getElementById(id);
-    const tBody=document.getElementById("expenseTableBody");
-    tBody.removeChild(tRow);
-}
 
 function showNotPremium() {
     alert("Become premium member to access this feature");
@@ -83,12 +83,10 @@ function showNotPremium() {
 async function subscribe(){
     const userId=localStorage.getItem("userId");
     const res=await axios.get("http://localhost:3000/purchase/purchase-premium",{headers:{"authorization":userId}})
-    let isPaymentFailed=false;
     const options={
         "key":res.data.key_id,
         "order_id":res.data.id,
         "handler":async (res)=>{
-            isPaymentFailed=true;
             await axios.post("http://localhost:3000/purchase/update-payment-status",{
                 orderId:options.order_id,
                 paymentId: res.razorpay_payment_id

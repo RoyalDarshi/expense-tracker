@@ -16,6 +16,6 @@ router.post("/create-expense",adminController.createExpense);
 
 router.get("/get-expenses/:userId",adminController.getAllExpenses);
 
-router.delete("/delete-expense/:id",adminController.deleteExpense)
+router.post("/delete-expense/:id",adminController.deleteExpense)
 
 module.exports=router;

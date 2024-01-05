@@ -43,6 +43,7 @@ async function login(){
         errMessage.innerText="";
         window.location.href="../html/expense.html"
         localStorage.setItem("userId",res.data.id);
+        localStorage.setItem("isPremiumUser",res.data.isPremiumUser)
         email.value="";
         password.value=""
     }).catch(err=>{

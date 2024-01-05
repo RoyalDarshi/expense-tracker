@@ -3,6 +3,7 @@ const jwt=require("jsonwebtoken");
 
 const User=require("../model/user");
 const Order=require("../model/order");
+const sequelize=require("../util/database");
 
 module.exports.purchasePremium=(req,res)=>{
     const razorpay=new Razorpay({
@@ -25,13 +26,16 @@ module.exports.updatePaymentStatus=async (req,res)=>{
     const orderId=req.body.orderId;
     const paymentId=req.body.paymentId;
     const userId=jwt.decode(req.headers.authorization);
-    await Order.update({status:"SUCCESS",paymentId: paymentId},{where:{orderId:orderId}}).catch(err=>{
+    const trans=await sequelize.transaction();
+    await Order.update({status:"SUCCESS",paymentId: paymentId},{where:{orderId:orderId}},{transaction:trans}).then(async ()=>{
+        await User.update({isPremiumUser:true},{where:{id:userId}},{transaction:trans}).then(async (err)=>{
+            await trans.commit();
+        })
+    }).catch(async (err)=>{
+        await trans.rollback();
         console.log(err)
     })
-    await User.update({isPremiumUser:true},{where:{id:userId}}).catch(err=>{
-        console.log(err)
-    })
-    res.status(201).json({msg:"Payment Success"})
+
 };
 
 module.exports.paymentFailed=async (req,res)=>{
