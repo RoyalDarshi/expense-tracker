@@ -32,7 +32,7 @@ module.exports.updatePaymentStatus=async (req,res)=>{
 
 module.exports.paymentFailed=async (req,res)=>{
     const orderId=req.body.orderId;
-    const userId=jwt.decode(req.headers.authorization);
-    await Order.update({status:"FAILED"},{where:{orderId:orderId}});
+    const status=req.body.status;
+    await Order.update({status:status},{where:{orderId:orderId}});
     res.status(201).json({msg:"Payment Failed"})
 }

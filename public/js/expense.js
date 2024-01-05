@@ -30,17 +30,23 @@ async function getAllData(){
     })
 }
 function showSubscribedBtn(){
-    const subscribedBtn=document.getElementById("subscribed");
-    subscribedBtn.classList.remove("visually-hidden")
+    const premiumList=document.getElementById("premium");
+    premiumList.classList.remove("visually-hidden")
+    const subscribed=document.getElementById("subscribed");
+    subscribed.classList.remove("visually-hidden")
 }
 
 function showSubscribeBtn(){
     const subscribeBtn=document.getElementById("subscribe");
     subscribeBtn.classList.remove("visually-hidden");
+    const notPremiumList=document.getElementById("notPremium");
+    notPremiumList.classList.remove("visually-hidden")
 }
 function hideSubscribeBtn(){
     const subscribeBtn=document.getElementById("subscribe");
     subscribeBtn.classList.add("visually-hidden")
+    const premiumList=document.getElementById("notPremium");
+    premiumList.classList.add("visually-hidden")
 }
 function createRow(data){
     const tBody=document.getElementById("expenseTableBody");
@@ -70,6 +76,10 @@ async function deleteRow(id){
     tBody.removeChild(tRow);
 }
 
+function showNotPremium() {
+    alert("Become premium member to access this feature");
+}
+
 async function subscribe(){
     const userId=localStorage.getItem("userId");
     const res=await axios.get("http://localhost:3000/purchase/purchase-premium",{headers:{"authorization":userId}})
@@ -87,14 +97,55 @@ async function subscribe(){
             showSubscribedBtn()
             alert("You are a premium user now")
 
+        },
+        "modal": {
+            "ondismiss":async function(){
+                await axios.post("http://localhost:3000/purchase/payment-failed",{
+                    orderId:options.order_id,
+                    status:"FAILED"
+                })
+            }
         }
     }
     const razorpay=new Razorpay(options);
     razorpay.open()
     razorpay.on("payment.failed",async()=>{
         await axios.post("http://localhost:3000/purchase/payment-failed",{
-            orderId:options.order_id
-        },{headers: {"authorization":userId}})
+            orderId:options.order_id,
+            status: "FAILED"
+        })
         alert("Payment Failed")
+    })
+}
+
+async function showLeaderBoard(){
+    await axios.get("http://localhost:3000/premium/leaderboard").then(res=>{
+        console.log(res);
+        const mainBody=document.getElementById("mainBody");
+        mainBody.innerHTML=`<div id="leaderboardTable">
+                <h3 class="mt-5 text-center">Leaderboard</h3>
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th scope="col">Rank</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Expense</th>
+                    </tr>
+                    </thead>
+                    <tbody id="leaderboardTableBody">
+                        <!-- Leaderboard data will be loaded here dynamically -->
+                    </tbody>
+                </table>
+            </div>`;
+        const tbody=document.getElementById("leaderboardTableBody");
+        for (let i = 0; i < res.data.length; i++) {
+            const tr=document.createElement("tr");
+            tr.innerHTML=`<tr>
+                        <td>${i+1}</td>
+                        <td>${res.data[i].name}</td>
+                        <td>${res.data[i].expense}</td>
+                    </tr>`;
+            tbody.appendChild(tr)
+        }
     })
 }

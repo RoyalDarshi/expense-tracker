@@ -7,7 +7,8 @@ require("dotenv").config()
 
 const db=require("./util/database");
 const adminRouter=require("./routes/admin");
-const premiumRouter=require("./routes/purchase");
+const purchaseRouter=require("./routes/purchase");
+const premiumRouter=require("./routes/premium")
 const errorController=require("./controller/error");
 const User=require("./model/user");
 const Expense=require("./model/expense");
@@ -25,7 +26,9 @@ app.use(express.static(path.join(__dirname,"public")));
 
 app.use(adminRouter);
 
-app.use("/purchase",premiumRouter);
+app.use("/purchase",purchaseRouter);
+
+app.use("/premium",premiumRouter);
 
 app.use(errorController.pageNotFound);
 
