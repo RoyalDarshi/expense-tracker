@@ -90,10 +90,12 @@ async function subscribe(){
             await axios.post("http://localhost:3000/purchase/update-payment-status",{
                 orderId:options.order_id,
                 paymentId: res.razorpay_payment_id
-            },{headers: {"authorization":userId}})
-            hideSubscribeBtn()
-            showSubscribedBtn()
-            alert("You are a premium user now")
+            },{headers: {"authorization":userId}}).then(()=>{
+                hideSubscribeBtn()
+                showSubscribedBtn()
+                alert("You are a premium user now")
+            })
+
 
         },
         "modal": {

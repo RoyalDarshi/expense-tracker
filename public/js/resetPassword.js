@@ -1,0 +1,9 @@
+async function resetPassword() {
+    const userId=localStorage.getItem("userId");
+    const email=document.getElementById("email");
+    const data={userId:userId,email:email.value}
+    await axios.post("http://localhost:3000/forgot-password",data).then(res=>{
+        alert("A reset password email has been sent to your registered email")
+        email.value=""
+    })
+}

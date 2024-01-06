@@ -28,8 +28,9 @@ module.exports.updatePaymentStatus=async (req,res)=>{
     const userId=jwt.decode(req.headers.authorization);
     const trans=await sequelize.transaction();
     await Order.update({status:"SUCCESS",paymentId: paymentId},{where:{orderId:orderId}},{transaction:trans}).then(async ()=>{
-        await User.update({isPremiumUser:true},{where:{id:userId}},{transaction:trans}).then(async (err)=>{
+        await User.update({isPremiumUser:true},{where:{id:userId}},{transaction:trans}).then(async (data)=>{
             await trans.commit();
+            res.status(201).json(data)
         })
     }).catch(async (err)=>{
         await trans.rollback();

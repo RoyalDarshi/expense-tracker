@@ -1,5 +1,6 @@
 const bcrypt=require("bcrypt");
 const jwt=require("jsonwebtoken");
+const SibApiV3Sdk = require('sib-api-v3-sdk');
 
 const path=require("path");
 
@@ -53,6 +54,103 @@ module.exports.loginUser=async (req,res)=>{
     }).catch(err=>{
         console.log(err)
     })
+}
+
+module.exports.forgotPassword=async (req,res)=>{
+    const email=req.body.email;
+    const userId=decodeToken(req.body.userId);
+    const defaultClient = SibApiV3Sdk.ApiClient.instance;
+    console.log(email)
+    let apiKey = defaultClient.authentications['api-key'];
+    apiKey.apiKey = process.env.BREVO_API_KEY;
+
+    let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+    const sender = {
+        email: 'priyadarshiroy92@gmail.com',
+        name: 'Admin',
+    }
+
+    const receivers = [
+        {
+            email: email,
+        },
+    ]
+    const sendTransacSms = {
+        sender,
+        to:receivers,
+        recipient:"+918982127516",
+        subject: "Forgot Password",
+        content:"Reset your password",
+        message:"forgot password",
+        htmlContent: `
+            <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forgot Password</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        p {
+            color: #666;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Forgot Password</h2>
+    <p>Hello,</p>
+    <p>We received a request to reset your password. If you did not make this request, please ignore this email.</p>
+    <p>To reset your password, click the button below:</p>
+    <p><a href="#" class="btn">Reset Password</a></p>
+    <p>If the button above does not work, you can copy and paste the following link into your browser:</p>
+    <p><a href="#">reset link</a></p>
+    <p>This link will expire in 10 Min.</p>
+    <p>If you have any questions, please contact support at priyadarshiroy92@gmail.com.</p>
+    <p>Best regards,<br>Your Application Team</p>
+</div>
+
+</body>
+</html>
+
+        `
+    };
+
+    apiInstance.sendTransacEmail(sendTransacSms).then(function(data) {
+        res.status(201).json(data);
+    }, function(error) {
+        console.error(error);
+        res.status(error.status).json(error)
+    });
 }
 
 module.exports.isPremiumUser=async (req,res)=>{
