@@ -12,6 +12,10 @@ router.post("/user-login",adminController.loginUser);
 
 router.post("/forgot-password",adminController.forgotPassword)
 
+router.get("/reset-password/:resetToken",adminController.getResetPassword)
+
+router.post("/reset-password",adminController.postResetPassword)
+
 router.get("/find-user",adminController.isPremiumUser);
 
 router.post("/create-expense",adminController.createExpense);

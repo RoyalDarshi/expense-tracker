@@ -1,9 +1,18 @@
 async function resetPassword() {
-    const userId=localStorage.getItem("userId");
-    const email=document.getElementById("email");
-    const data={userId:userId,email:email.value}
-    await axios.post("http://localhost:3000/forgot-password",data).then(res=>{
-        alert("A reset password email has been sent to your registered email")
-        email.value=""
-    })
+    const pass=document.getElementById("password");
+    const confPass=document.getElementById("confirmPassword");
+    if(pass.value!==confPass.value){
+        const errMsg=document.getElementById("errorMsg");
+        errMsg.innerText="Password doesn't match";
+    }
+    else{
+        const userId=localStorage.getItem("userId");
+        const data={userId:userId,password:pass.value};
+        await axios.post("http://localhost:3000/reset-password",data).then(res=>{
+            if(res.data.msg){
+                alert(res.data.msg)
+                window.location.href="../html/login.html";
+            }
+        })
+    }
 }

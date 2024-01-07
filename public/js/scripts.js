@@ -34,7 +34,7 @@ async function signUpData(){
     }
 }
 function resetPassword(){
-    window.location.href="../html/resetPassword.html"
+    window.location.href="../html/forgotPassword.html"
 }
 async function login(){
     const errMessage=document.getElementById("loginErrorMessages");

@@ -1,6 +1,7 @@
 const bcrypt=require("bcrypt");
 const jwt=require("jsonwebtoken");
 const SibApiV3Sdk = require('sib-api-v3-sdk');
+const uuid=require("uuid");
 
 const path=require("path");
 
@@ -8,6 +9,7 @@ const rootDir=require("../util/path");
 const User=require("../model/user");
 const Expense=require("../model/expense");
 const sequelize=require("../util/database");
+const ForgotPassword=require("../model/forgotPasswordRequest");
 
 function createToken(id){
     return jwt.sign(id,"72gsd33tags3fdh32hdh3hch44gd32hgh32g3hg")
@@ -59,30 +61,31 @@ module.exports.loginUser=async (req,res)=>{
 module.exports.forgotPassword=async (req,res)=>{
     const email=req.body.email;
     const userId=decodeToken(req.body.userId);
-    const defaultClient = SibApiV3Sdk.ApiClient.instance;
-    console.log(email)
+    const defaultClient = SibApiV3Sdk.ApiClient.instance
+    const resetToken = uuid.v4();
+    const resetLink = `http://localhost:3000/reset-password/${resetToken}`;
     let apiKey = defaultClient.authentications['api-key'];
     apiKey.apiKey = process.env.BREVO_API_KEY;
+    await ForgotPassword.create({id:resetToken,isActive:true,userId:userId}).then(()=>{
+        let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+        const sender = {
+            email: 'priyadarshiroy92@gmail.com',
+            name: 'Admin',
+        }
 
-    let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-    const sender = {
-        email: 'priyadarshiroy92@gmail.com',
-        name: 'Admin',
-    }
-
-    const receivers = [
-        {
-            email: email,
-        },
-    ]
-    const sendTransacSms = {
-        sender,
-        to:receivers,
-        recipient:"+918982127516",
-        subject: "Forgot Password",
-        content:"Reset your password",
-        message:"forgot password",
-        htmlContent: `
+        const receivers = [
+            {
+                email: email,
+            },
+        ]
+        const sendTransacSms = {
+            sender,
+            to:receivers,
+            recipient:"+918982127516",
+            subject: "Forgot Password",
+            content:"Reset your password",
+            message:"forgot password",
+            htmlContent: `
             <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -131,9 +134,9 @@ module.exports.forgotPassword=async (req,res)=>{
     <p>Hello,</p>
     <p>We received a request to reset your password. If you did not make this request, please ignore this email.</p>
     <p>To reset your password, click the button below:</p>
-    <p><a href="#" class="btn">Reset Password</a></p>
+    <p><a href=${resetLink} class="btn">Reset Password</a></p>
     <p>If the button above does not work, you can copy and paste the following link into your browser:</p>
-    <p><a href="#">reset link</a></p>
+    <p>${resetLink}</p>
     <p>This link will expire in 10 Min.</p>
     <p>If you have any questions, please contact support at priyadarshiroy92@gmail.com.</p>
     <p>Best regards,<br>Your Application Team</p>
@@ -143,14 +146,45 @@ module.exports.forgotPassword=async (req,res)=>{
 </html>
 
         `
-    };
+        };
 
-    apiInstance.sendTransacEmail(sendTransacSms).then(function(data) {
-        res.status(201).json(data);
-    }, function(error) {
-        console.error(error);
-        res.status(error.status).json(error)
-    });
+        apiInstance.sendTransacEmail(sendTransacSms).then(function(data) {
+            res.status(201).json(data);
+        }, function(error) {
+            console.error(error);
+            res.status(error.status).json(error)
+        });
+    })
+
+}
+
+module.exports.getResetPassword=async (req, res)=>{
+    const resetToken=req.params.resetToken;
+    await ForgotPassword.findOne({where:{id:resetToken}}).then(data=>{
+        if(!data){
+           return res.status(404).json({err:"Unable to find Req"});
+        }
+        else if(!data.dataValues.isActive){
+           return res.status(400).json({err:"Req has been disclosed please send another req"});
+        }
+        res.sendFile(path.join(rootDir,"public/html","resetPassword.html"));
+    })
+}
+module.exports.postResetPassword=async (req,res)=>{
+    const id=decodeToken(req.body.userId);
+    const trans=await sequelize.transaction()
+    const password=req.body.password
+    bcrypt.hash(password,10,async(err,data)=>{
+        await User.update({password:data},{where:{id:id}},{transaction:trans}).then(async (data)=>{
+            await ForgotPassword.update({isActive:false},{where:{userId:id}})
+        }).then(async (data)=>{
+            await trans.commit()
+            res.status(201).json({msg:"User password updated successfully"});
+        }).catch(async (err)=>{
+            await trans.rollback();
+            res.status(400).json({err:err});
+        })
+    })
 }
 
 module.exports.isPremiumUser=async (req,res)=>{

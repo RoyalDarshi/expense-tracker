@@ -13,6 +13,7 @@ const errorController=require("./controller/error");
 const User=require("./model/user");
 const Expense=require("./model/expense");
 const Order=require("./model/order");
+const ForgotPassword=require("./model/forgotPasswordRequest");
 
 const app=express();
 
@@ -37,6 +38,9 @@ User.hasMany(Expense);
 
 Order.belongsTo(User,{constraints:true,onDelete:"CASCADE"});
 User.hasMany(Order);
+
+ForgotPassword.belongsTo(User,{constraints:true,onDelete:"CASCADE"});
+User.hasMany(ForgotPassword);
 
 db.sync().then(()=>{
     app.listen(3000);
