@@ -149,3 +149,111 @@ async function showLeaderBoard(){
         }
     })
 }
+
+async function showExpense(){
+    const mainBody=document.getElementById("mainBody");
+    mainBody.innerHTML=`
+<div class="container mt-5 bg-light p-4 rounded shadow">
+    <h2 class="mb-4">Expense and Income Tracker</h2>
+
+    <!-- Filter Buttons -->
+    <div class="btn-group mb-3">
+        <button class="btn btn-primary filter-btn" data-filter="all">All</button>
+        <button class="btn btn-secondary filter-btn" data-filter="daily">Daily</button>
+        <button class="btn btn-secondary filter-btn" data-filter="weekly">Weekly</button>
+        <button class="btn btn-secondary filter-btn" data-filter="monthly">Monthly</button>
+    </div>
+
+    <table class="table table-bordered table-striped">
+        <thead class="bg-primary text-light">
+        <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Description</th>
+            <th scope="col">Category</th>
+            <th scope="col">Type</th>
+            <th scope="col">Amount</th>
+        </tr>
+        </thead>
+        <tbody id="expenseTableBody">
+            <!-- Expenses and Incomes will be loaded here dynamically -->
+        </tbody>
+    </table>
+
+    <!-- Download Button with Font Awesome Icon -->
+    <button class="btn btn-success" onclick="downloadData()">
+        <i class="fas fa-download"></i> Download
+    </button>
+</div>
+    `
+    renderTable('all')
+}
+const data = [
+    { date: '2022-01-01', description: 'Groceries', category: 'Food', type: 'Expense', amount: 50.00 },
+    { date: '2022-01-05', description: 'Salary', category: 'Income', type: 'Income', amount: 1000.00 },
+    // Add more data as needed
+];
+
+// Function to render the table based on the selected filter
+function renderTable(filter) {
+    const filteredData = (filter === 'all') ? data : filterData(filter);
+    const tableBody = document.getElementById('expenseTableBody');
+    tableBody.innerHTML = '';
+
+    filteredData.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+                <td>${item.date}</td>
+                <td>${item.description}</td>
+                <td>${item.category}</td>
+                <td>${item.type}</td>
+                <td>${item.amount.toFixed(2)}</td>
+            `;
+        tableBody.appendChild(row);
+    });
+}
+
+// Function to filter data based on the selected filter
+function filterData(filter) {
+    const currentDate = new Date();
+    switch (filter) {
+        case 'daily':
+            return data.filter(item => new Date(item.date).toDateString() === currentDate.toDateString());
+        case 'weekly':
+            const startOfWeek = new Date(currentDate);
+            startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+            return data.filter(item => new Date(item.date) >= startOfWeek);
+        case 'monthly':
+            const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+            return data.filter(item => new Date(item.date) >= startOfMonth);
+        default:
+            return data;
+    }
+}
+
+// Event listener for filter buttons
+const filterButtons = document.querySelectorAll('.filter-btn');
+filterButtons.forEach(button => {
+    button.addEventListener('click', function() {
+        const filter = this.getAttribute('data-filter');
+        renderTable(filter);
+    });
+});
+
+// Function to download data as CSV
+function downloadData() {
+    const filteredData = filterData('all');
+    const csvContent = "data:text/csv;charset=utf-8,"
+        + "Date,Description,Category,Type,Amount\n"
+        + filteredData.map(item => `${item.date},${item.description},${item.category},${item.type},${item.amount}`).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "expense_income_data.csv");
+    document.body.appendChild(link);
+    link.click();
+}
+
+/*
+// Initial rendering
+renderTable('all');*/
